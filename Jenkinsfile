@@ -47,7 +47,7 @@ pipeline {
                         --network-interface subnet-name=default-ru-central1-b,nat-ip-version=ipv4 \
                         --memory $mem \
                         --cores $cpu \
-                        --create-boot-disk image-family=$image,size=$diskSize \
+                        --create-boot-disk image-folder-id=standard-images,image-family=$image \
                         --metadata-from-file user-data=metadata.yaml
                     """
 
