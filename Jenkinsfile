@@ -5,7 +5,7 @@ pipeline {
     environment {
         YC_FOLDER_ID = 'b1gdge57rslfb323otnm' 
         YC_CLOUD_ID = 'b1glh5elut8uibsdt45f'
-        YC_SERVICE_ACCOUNT_KEY = credentials('yc-sa-key') 
+        YC_SERVICE_ACCOUNT_KEY = credentials('key.json (yc-sa-key)') 
     }
 
     parameters {
