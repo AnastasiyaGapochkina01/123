@@ -21,7 +21,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                        ${yc} config profile create sa-profile
+                        ${yc} config profile create sa-profile || true
                         ${yc} config set service-account-key readFile ${env.YC_SERVICE_ACCOUNT_KEY}
                         ${yc} config set cloud-id $YC_CLOUD_ID
                         ${yc} config set folder-id $YC_FOLDER_ID
