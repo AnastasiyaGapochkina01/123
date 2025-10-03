@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+
+    parameters {
+        booleanParam(name: 'CHECK_MODE', defaultValue: false, description: 'Run dry run')
+        string(name: 'HOST', defaultValue: false, description: 'Host for apply')
+    }
+
+    environment {
+        //SSH_CREDS = 'priv_key'
+        //INVENTORY = 'hosts.ini'
+        PLAYBOOK = 'playbook.yml'
+    }
+
+    stages {
+        stage('Lint Ansible') {
+            steps {
+                sh 'ansible-lint ${PLAYBOOK}'
+            }
+        }
+
+        stage('Test Playbook Syntax') {
+            steps {
+                sh """
+                  ansible-playbook --syntax-check -i "${params.HOST}," ${PLAYBOOK}
+                """
+            }
+        }
+
+        stage('Dry Run (Check Mode)') {
+            when {
+                expression { params.CHECK_MODE == true }
+            }
+            steps {
+              withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-key', keyFileVariable: 'private_key', usernameVariable: 'username')]) {
+                script {
+                  echo 'Running ansible-playbook in check mode (dry run)...'
+                  ansiblePlaybook(
+                    inventory: "${params.HOST},",
+                    playbook: "${PLAYBOOK}",
+                    //extras: "--private-key=${private_key} --check",
+                    forks: 5,
+                    become: true,
+                    colorized: true,
+                )
+              }
+            }
+            }
+        }
+
+        }
+}
