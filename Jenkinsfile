@@ -41,7 +41,7 @@ pipeline {
                     def diskSize = params.BOOT_DISK_SIZE + 'gb'
 
                     sh """
-                    \$yc compute instance create \
+                    ${yc} compute instance create \
                         --name $vmName \
                         --zone ru-central1-b \
                         --network-interface subnet-name=default-ru-central1-b,nat-ip-version=ipv4 \
@@ -54,7 +54,7 @@ pipeline {
                     // Проверяем статус VM до running
                     timeout(time: 5, unit: 'MINUTES') {
                         waitUntil {
-                            def status = sh(script: "\$yc compute instance get --name $vmName --format json | jq -r '.status'", returnStdout: true).trim()
+                            def status = sh(script: "${yc} compute instance get --name $vmName --format json | jq -r '.status'", returnStdout: true).trim()
                             echo "VM status: ${status}"
                             return (status == 'RUNNING')
                         }
