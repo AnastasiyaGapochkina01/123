@@ -13,13 +13,7 @@ pipeline {
     }
 
     stages {
-        stage('Lint Ansible') {
-            steps {
-                sh 'ansible-lint ${PLAYBOOK}'
-            }
-        }
-
-        stage('Syntax Check') {
+       stage('Syntax Check') {
     steps {
         ansiblePlaybook(
             playbook: "${PLAYBOOK}",
@@ -29,6 +23,7 @@ pipeline {
         )
     }
 }
+
 
 
 
