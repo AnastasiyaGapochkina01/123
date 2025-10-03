@@ -22,7 +22,10 @@ pipeline {
                 script {
                     writeFile file: 'key.json', text: env.YC_SERVICE_ACCOUNT_KEY
                     sh """
-                        ${yc} config profile create sa-profile --folder-id $YC_FOLDER_ID --cloud-id $YC_CLOUD_ID --service-account-key key.json
+                        ${yc} config profile create sa-profile
+                        ${yc} config set service-account-key key.json
+                        ${yc} config set cloud-id $YC_CLOUD_ID
+                        ${yc} config set folder-id $YC_FOLDER_ID
                         ${yc} config set active sa-profile
                     """
                 }
