@@ -20,12 +20,17 @@ pipeline {
         }
 
         stage('Test Playbook Syntax') {
-            steps {
-                sh """
-                  ansible-playbook --syntax-check -i "${params.HOST}," ${PLAYBOOK}
-                """
+    steps {
+        script {
+            def lintStatus = sh(script: "ansible-playbook --syntax-check -i \"${params.HOST},\" ${PLAYBOOK}", returnStatus: true)
+            if (lintStatus != 0) {
+                echo "Lint failed with status ${lintStatus}, marking build as UNSTABLE"
+                currentBuild.result = 'UNSTABLE'
             }
         }
+    }
+}
+
 
         stage('Dry Run (Check Mode)') {
             when {
