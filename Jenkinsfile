@@ -1,3 +1,4 @@
+def yc = '/var/lib/jenkins/yc'
 pipeline {
     agent any
 
@@ -21,8 +22,8 @@ pipeline {
                 script {
                     writeFile file: 'key.json', text: env.YC_SERVICE_ACCOUNT_KEY
                     sh """
-                        yc config create --access-key dummy --secret-key dummy --folder-id $YC_FOLDER_ID --cloud-id $YC_CLOUD_ID --service-account-key key.json --config-name sa-profile
-                        yc config set active sa-profile
+                        \$yc config create --access-key dummy --secret-key dummy --folder-id $YC_FOLDER_ID --cloud-id $YC_CLOUD_ID --service-account-key key.json --config-name sa-profile
+                        \$yc config set active sa-profile
                     """
                 }
             }
@@ -38,7 +39,7 @@ pipeline {
                     def diskSize = params.BOOT_DISK_SIZE + 'gb'
 
                     sh """
-                    yc compute instance create \
+                    \$yc compute instance create \
                         --name $vmName \
                         --zone ru-central1-b \
                         --network-interface subnet-name=default-ru-central1-b,nat-ip-version=ipv4 \
@@ -51,7 +52,7 @@ pipeline {
                     // Проверяем статус VM до running
                     timeout(time: 5, unit: 'MINUTES') {
                         waitUntil {
-                            def status = sh(script: "yc compute instance get --name $vmName --format json | jq -r '.status'", returnStdout: true).trim()
+                            def status = sh(script: "\$yc compute instance get --name $vmName --format json | jq -r '.status'", returnStdout: true).trim()
                             echo "VM status: ${status}"
                             return (status == 'RUNNING')
                         }
