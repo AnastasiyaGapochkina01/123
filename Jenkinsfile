@@ -9,7 +9,7 @@ pipeline {
     }
 
     parameters {
-        choice(name: 'IMAGE', choices: ['ubuntu-24-04', 'debian-12'], description: 'Выберите образ')
+        choice(name: 'IMAGE', choices: ['ubuntu-2404-lts', 'debian-12'], description: 'Выберите образ')
         string(name: 'CPU', defaultValue: '2', description: 'Количество CPU')
         string(name: 'MEMORY', defaultValue: '4', description: 'Объем памяти в ГБ')
         string(name: 'BOOT_DISK_SIZE', defaultValue: '20', description: 'Размер загрузочного диска в ГБ')
