@@ -5,7 +5,7 @@ pipeline {
     environment {
         YC_FOLDER_ID = 'b1gdge57rslfb323otnm' 
         YC_CLOUD_ID = 'b1glh5elut8uibsdt45f'
-        YC_SERVICE_ACCOUNT_KEY = credentials('key.json (yc-sa-key)') 
+        YC_SERVICE_ACCOUNT_KEY = credentials('yc-sa-key') 
     }
 
     parameters {
@@ -20,10 +20,9 @@ pipeline {
         stage('Setup yc CLI') {
             steps {
                 script {
-                    writeFile file: 'key.json', text: env.YC_SERVICE_ACCOUNT_KEY
                     sh """
                         ${yc} config profile create sa-profile
-                        ${yc} config set service-account-key key.json
+                        ${yc} config set service-account-key readFile ${env.YC_SERVICE_ACCOUNT_KEY}
                         ${yc} config set cloud-id $YC_CLOUD_ID
                         ${yc} config set folder-id $YC_FOLDER_ID
                         ${yc} config set active sa-profile
