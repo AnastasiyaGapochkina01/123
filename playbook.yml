@@ -1,0 +1,11 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Ping
+      ping:
+      register: check_status
+      
+    - name: Output
+      debug:
+        msg: "{{ check_status.stdout }}"
