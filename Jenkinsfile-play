@@ -3,7 +3,7 @@ pipeline {
 
     parameters {
         booleanParam(name: 'CHECK_MODE', defaultValue: false, description: 'Run dry run')
-        string(name: 'HOST', defaultValue: false, description: 'Host for apply')
+        string(name: 'HOST', defaultValue: '89.169.184.19', description: 'Host for apply')
     }
 
     environment {
