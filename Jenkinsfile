@@ -76,6 +76,21 @@ pipeline {
                     ).trim()
                     echo "VM Public IP: ${vmPubIp}"
 
+                    timeout(time: 5, unit: 'MINUTES') {
+                        waitUntil {
+                            def sshAvailable = sh(
+                                script: "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 jenkins@${vmPubIp} 'echo 1'",
+                                returnStatus: true
+                            ) == 0
+                            if (!sshAvailable) {
+                                echo "SSH not yet available on ${vmPubIp}, retrying..."
+                            }
+                            return sshAvailable
+                        }
+                    }
+
+                    echo "SSH is available on ${vmPubIp}"
+
                     build(
                         job: '345',
                         parameters: [
