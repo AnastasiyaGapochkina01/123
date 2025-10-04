@@ -3,50 +3,78 @@ pipeline {
 
     parameters {
         booleanParam(name: 'CHECK_MODE', defaultValue: false, description: 'Run dry run')
-        string(name: 'HOST', defaultValue: '89.169.184.19', description: 'Host for apply')
+        string(name: 'HOST', defaultValue: '89.169.177.174', description: 'Host for apply')
     }
 
     environment {
-        //SSH_CREDS = 'priv_key'
-        //INVENTORY = 'hosts.ini'
         PLAYBOOK = 'playbook.yml'
     }
 
     stages {
-       stage('Syntax Check') {
-    steps {
-        ansiblePlaybook(
-            playbook: "${PLAYBOOK}",
-            inventory: "${params.HOST},",
-            extras: '--syntax-check',
-            become: true
-        )
-    }
-}
 
-
-
+        stage('Syntax Check') {
+            steps {
+                ansiblePlaybook(
+                    playbook: "${PLAYBOOK}",
+                    inventory: "${params.HOST},",
+                    extras: '--syntax-check',
+                    become: true
+                )
+            }
+        }
 
         stage('Dry Run (Check Mode)') {
             when {
                 expression { params.CHECK_MODE == true }
             }
             steps {
-              withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-key', keyFileVariable: 'private_key', usernameVariable: 'username')]) {
-                script {
-                  echo 'Running ansible-playbook in check mode (dry run)...'
-                  ansiblePlaybook(
-                    inventory: "${params.HOST},",
-                    playbook: "${PLAYBOOK}",
-                    //extras: "--private-key=${private_key} --check",
-                    forks: 5,
-                    become: true,
-                    colorized: true,
-                )
-              }
-            }
+                withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-key', keyFileVariable: 'private_key', usernameVariable: 'username')]) {
+                    script {
+                        echo 'Running ansible-playbook in check mode (dry run)...'
+                        ansiblePlaybook(
+                            inventory: "${params.HOST},",
+                            playbook: "${PLAYBOOK}",
+                            extras: "--private-key=${private_key} --check",
+                            forks: 5,
+                            become: true,
+                            colorized: true
+                        )
+                    }
+                }
             }
         }
 
+        stage('Approval to Proceed') {
+            when {
+                expression { params.CHECK_MODE == true }
+            }
+            steps {
+                script {
+                    def userInput = input(
+                        message: 'Dry run complete. Proceed with actual deployment?',
+                        ok: 'Deploy',
+                        parameters: []
+                    )
+                    echo "User confirmed deployment: ${userInput}"
+                }
+            }
         }
+
+        stage('Apply') {
+            steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-key', keyFileVariable: 'private_key', usernameVariable: 'username')]) {
+                    script {
+                        echo 'Running actual deployment with ansible-playbook...'
+                        ansiblePlaybook(
+                            inventory: "${params.HOST},",
+                            playbook: "${PLAYBOOK}",
+                            extras: "--private-key=${private_key}",
+                            become: true,
+                            colorized: true
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
