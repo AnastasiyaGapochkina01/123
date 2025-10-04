@@ -1,11 +1,12 @@
 def yc = '/var/lib/jenkins/yc'
+
 pipeline {
     agent any
 
     environment {
-        YC_FOLDER_ID = 'b1gdge57rslfb323otnm' 
+        YC_FOLDER_ID = 'b1gdge57rslfb323otnm'
         YC_CLOUD_ID = 'b1glh5elut8uibsdt45f'
-        YC_SERVICE_ACCOUNT_KEY = credentials('key') 
+        YC_SERVICE_ACCOUNT_KEY = credentials('key')
     }
 
     parameters {
@@ -17,14 +18,15 @@ pipeline {
     }
 
     stages {
+
         stage('Setup yc CLI') {
             steps {
                 script {
                     sh """
                         ${yc} config profile create sa-profile || true
                         ${yc} config set service-account-key ${env.YC_SERVICE_ACCOUNT_KEY}
-                        ${yc} config set cloud-id $YC_CLOUD_ID
-                        ${yc} config set folder-id $YC_FOLDER_ID
+                        ${yc} config set cloud-id ${YC_CLOUD_ID}
+                        ${yc} config set folder-id ${YC_FOLDER_ID}
                         ${yc} config profile activate sa-profile
                     """
                 }
@@ -41,24 +43,47 @@ pipeline {
                     def diskSize = params.BOOT_DISK_SIZE + 'gb'
 
                     sh """
-                    ${yc} compute instance create \
-                        --name $vmName \
-                        --zone ru-central1-b \
-                        --network-interface subnet-name=default-ru-central1-b,nat-ip-version=ipv4 \
-                        --memory $mem \
-                        --cores $cpu \
-                        --create-boot-disk image-folder-id=standard-images,image-family=$image \
-                        --metadata-from-file user-data=metadata.yaml
+                        ${yc} compute instance create \
+                            --name ${vmName} \
+                            --zone ru-central1-b \
+                            --network-interface subnet-name=default-ru-central1-b,nat-ip-version=ipv4 \
+                            --memory ${mem} \
+                            --cores ${cpu} \
+                            --create-boot-disk image-folder-id=standard-images,image-family=${image},size=${diskSize} \
+                            --metadata-from-file user-data=metadata.yaml
                     """
 
-                    // Проверяем статус VM до running
                     timeout(time: 5, unit: 'MINUTES') {
                         waitUntil {
-                            def status = sh(script: "${yc} compute instance get --name $vmName --format json | jq -r '.status'", returnStdout: true).trim()
+                            def status = sh(
+                                script: "${yc} compute instance get --name ${vmName} --format json | jq -r '.status'",
+                                returnStdout: true
+                            ).trim()
                             echo "VM status: ${status}"
                             return (status == 'RUNNING')
                         }
                     }
+                }
+            }
+        }
+
+        stage('Run Ansible Pipeline') {
+            steps {
+                script {
+                    def vmPubIp = sh(
+                        script: "${yc} compute instance get --name ${params.VM_NAME} --format json | jq -r '.network_interfaces[0].primary_v4_address.one_to_one_nat.address'",
+                        returnStdout: true
+                    ).trim()
+                    echo "VM Public IP: ${vmPubIp}"
+
+                    build(
+                        job: 'ansible-pipeline',
+                        parameters: [
+                            string(name: 'HOST', value: vmPubIp),
+                            booleanParam(name: 'CHECK_MODE', value: false)
+                        ],
+                        wait: true
+                    )
                 }
             }
         }
