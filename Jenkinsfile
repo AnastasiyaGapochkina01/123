@@ -77,7 +77,7 @@ pipeline {
                     echo "VM Public IP: ${vmPubIp}"
 
                     build(
-                        job: 'ansible-pipeline',
+                        job: '345',
                         parameters: [
                             string(name: 'HOST', value: vmPubIp),
                             booleanParam(name: 'CHECK_MODE', value: false)
